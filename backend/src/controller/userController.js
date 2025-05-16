@@ -89,3 +89,22 @@ export async function acceptFriendRequest(req, res){
         });
     }
 }
+
+export async function getFriendRequest(req, res){
+    try{
+        const incomingReqs = await FriendRequest.find({
+            recipient: req.user.id, 
+            status: "pending"
+        }).populate("sender", "fullName profilePic nativeLanguage")
+        const acceptingReqs = await FriendRequest.find({
+            sender: req.user.id, 
+            status: "pending"
+        }).populate("recipient", "fullName profilePic nativeLanguage")
+        res.status(200).json({incomingReqs, acceptingReqs});
+    } catch(error){
+        console.log("Error in getFriendRequest controller", error.message);
+        res.status(500).json({
+            message: "Internal server error",
+        }); 
+    }
+}
