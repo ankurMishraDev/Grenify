@@ -68,3 +68,24 @@ export async function sendFriendRequest(res, req){
         });
     }
 }
+
+export async function acceptFriendRequest(req, res){
+    try{
+        const {id:requestId} = req.params;
+        const friendReqs = await FriendRequest.findById(requestId)
+        if(!friendReqs){
+            return res.status(400).json({message: "Friend request not found"});
+        }
+        if(friendReqs.recipient.toString() !== req.user.id){
+            return res.status(400).json({message: "You are not the recipient of this friend request"});
+        }
+        friendReqs.status = "accepted";
+        await friendReqs.save();
+        await User.findByIdAndUpdate(friendReqs.sender, {$addToSet: {friends: friendReqs.recipient}});
+    } catch(error){
+        console.log("Error in acceptFriendRequest controller", error.message);
+        res.status(500).json({
+            message: "Internal server error",
+        });
+    }
+}
