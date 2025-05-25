@@ -14,12 +14,10 @@ const App = () => {
 const { isLoading, authUser} = useAuthUser();
 
 const isAuthenticated = Boolean(authUser);
-const isOnboarded = authUser?.isOnboarded
+const isOnboarded = authUser?.isOnboarding;
   if(isLoading){
 return <PageLoader/>
   }
-  
-
   return (
     <div className="h-screen " data-theme="autumn">
       <Routes>
