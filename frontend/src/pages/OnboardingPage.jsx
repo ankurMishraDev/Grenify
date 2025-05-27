@@ -25,7 +25,7 @@ const OnboardingPage = () => {
     },
     onError: (error) => {
       console.error("Error completing onboarding:", error);
-      toast.error(error.response.data.messageFields);
+      toast.error(error.response.data.message);
     },
   });
   const handleAvatarChange = () => {
@@ -41,156 +41,143 @@ const OnboardingPage = () => {
   };
   return (
     <div className="min-h-screen bg-base-100 flex items-center justify-center p-2">
-      <div className="card bg-base-200 w-full max-w-3xl shadow-xl  max-h-[80vh]">
+      <div className="card bg-base-200 w-full max-w-4xl shadow-xl max-h-[80vh]">
         <div className="card-body p-6 sm:p-8 overflow-y-auto">
-          <h1 className="text-2xl sm:text-3xl font-bold text-center mb-4">
-            Kindly Fill Details
-          </h1>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/*profile pic*/}
-            <div className="flex flex-col items-center justify-center space-y-4">
-              {/*image preview*/}
-              <div className="size-32 rounded-full bg-base-300 overflow-hidden">
-                {formState.profilePic ? (
-                  <img
-                    src={formState.profilePic}
-                    alt="Profile image preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <CameraIcon className="size-12 text-base-content opacity-50" />
-                  </div>
-                )}
-              </div>
-              {/* change avatar pic button */}
-              <div className="flex items-center gap-1">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left Column - Heading and Profile */}
+            <div className="flex flex-col items-center justify-start space-y-6">
+              <h1 className="text-2xl sm:text-3xl font-bold text-center mb-4">
+                Complete Your Profile
+              </h1>
+              
+              {/* Profile pic */}
+              <div className="flex flex-col items-center justify-center space-y-4">
+                <div className="size-40 rounded-full bg-base-300 overflow-hidden">
+                  {formState.profilePic ? (
+                    <img
+                      src={formState.profilePic}
+                      alt="Profile image preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <CameraIcon className="size-16 text-base-content opacity-50" />
+                    </div>
+                  )}
+                </div>
+                
                 <button
                   className="btn btn-accent"
                   onClick={handleAvatarChange}
                   type="button"
                 >
-                  Change Avatar Pic
+                  Change Avatar
                 </button>
               </div>
             </div>
 
-            {/* Full Name */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Full Name</span>
-              </label>
-              <input
-                type="text"
-                name="fullName"
-                value={formState.fullName}
-                onChange={(e) =>
-                  setFormState({ ...formState, fullName: e.target.value })
-                }
-                className="input input-bordered w-full"
-                placeholder="Enter your full name"
-                required
-              />
-            </div>
-
-            {/* Bio */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Bio</span>
-              </label>
-              <input
-                type="text"
-                name="bio"
-                value={formState.bio}
-                onChange={(e) =>
-                  setFormState({ ...formState, bio: e.target.value })
-                }
-                className="input input-bordered w-full"
-                placeholder="Enter your Bio details here"
-                required
-              />
-            </div>
-
-            {/* Language */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {/* Native Language */}
+            {/* Right Column - Form Fields */}
+            <div className="space-y-4">
+              {/* Form fields */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text">Native Language</span>
+                  <span className="label-text">Full Name</span>
                 </label>
-                <select
-                  name="nativeLanguage"
-                  value={formState.nativeLanguage}
-                  onChange={(e) =>
-                    setFormState({
-                      ...formState,
-                      nativeLanguage: e.target.value,
-                    })
-                  }
-                  className="select select-bordered w-full"
-                >
-                  <option value="">Select your native language</option>
-                  {LANGUAGES.map((lang) => (
-                    <option key={lang} value={lang.toLowerCase()}>
-                      {lang}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {/* Learning Language */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Learning Language</span>
-                </label>
-                <select
-                  name="learningLanguage"
-                  value={formState.learningLanguage}
-                  onChange={(e) =>
-                    setFormState({
-                      ...formState,
-                      learningLanguage: e.target.value,
-                    })
-                  }
-                  className="select select-bordered w-full"
-                >
-                  <option value="">Select language you're learning</option>
-                  {LANGUAGES.map((lang) => (
-                    <option key={lang} value={lang.toLowerCase()}>
-                      {lang}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Location */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Location</span>
-              </label>
-              <div className="relative">
-                <MapPinIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 size-5 text-base-content opcacity-50" />
                 <input
                   type="text"
-                  name="location"
-                  value={formState.location}
-                  onChange={(e) =>
-                    setFormState({ ...formState, location: e.target.value })
-                  }
-                  className="input input-bordered w-full pl-10"
-                  placeholder="Enter your location: City, Country"
+                  name="fullName"
+                  value={formState.fullName}
+                  onChange={(e) => setFormState({ ...formState, fullName: e.target.value })}
+                  className="input input-bordered w-full"
+                  placeholder="Enter your full name"
+                  required
                 />
               </div>
-            </div>
 
-            {/* Submit Button */}
-            <button
-              className="btn btn-primary w-full"
-              disabled={isPending}
-              type="submit"
-            >
-              {!isPending ? <>Provide all Details</> : <>Updating Details</>}
-            </button>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Bio</span>
+                </label>
+                <input
+                  type="text"
+                  name="bio"
+                  value={formState.bio}
+                  onChange={(e) => setFormState({ ...formState, bio: e.target.value })}
+                  className="input input-bordered w-full"
+                  placeholder="Enter your Bio details here"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {/* Language fields */}
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Native Language</span>
+                  </label>
+                  <select
+                    name="nativeLanguage"
+                    value={formState.nativeLanguage}
+                    onChange={(e) => setFormState({ ...formState, nativeLanguage: e.target.value })}
+                    className="select select-bordered w-full"
+                    required
+                  >
+                    <option value="">Select</option>
+                    {LANGUAGES.map((lang) => (
+                      <option key={lang} value={lang.toLowerCase()}>
+                        {lang}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Learning Language</span>
+                  </label>
+                  <select
+                    name="learningLanguage"
+                    value={formState.learningLanguage}
+                    onChange={(e) => setFormState({ ...formState, learningLanguage: e.target.value })}
+                    className="select select-bordered w-full"
+                    required
+                  >
+                    <option value="">Select</option>
+                    {LANGUAGES.map((lang) => (
+                      <option key={lang} value={lang.toLowerCase()}>
+                        {lang}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Location</span>
+                </label>
+                <div className="relative">
+                  <MapPinIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 size-5 text-base-content opacity-50" />
+                  <input
+                    type="text"
+                    name="location"
+                    value={formState.location}
+                    onChange={(e) => setFormState({ ...formState, location: e.target.value })}
+                    className="input input-bordered w-full pl-10"
+                    placeholder="Enter your location: City, Country"
+                  />
+                </div>
+              </div>
+
+              <button
+                className="btn btn-primary w-full mt-6"
+                disabled={isPending}
+                type="submit"
+              >
+                {!isPending ? "Complete Profile" : 
+                  <><span className="loading loading-spinner loading-xs"></span> Updating...</>}
+              </button>
+            </div>
           </form>
         </div>
       </div>
