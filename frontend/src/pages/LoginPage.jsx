@@ -10,8 +10,8 @@ const LoginPage = () => {
     email: "",
     password: "",
   });
-  const {isPending,error, mutate} = useLogin();
-  const handleSubmit = (e) => {
+  const {isPending,error, mutate} =  useLogin();
+  const handleSubmit = (e) =>  {
     e.preventDefault();
     mutate(login);
   };
@@ -72,6 +72,7 @@ const LoginPage = () => {
                     </label>
                     <input
                       type="password"
+                      autoComplete="current-password"
                       placeholder="********"
                       className="input input-bordered w-full"
                       value={login.password}

@@ -9,6 +9,7 @@ import ChatPage from "./pages/ChatPage.jsx";
 import { Toaster } from "react-hot-toast";
 import useAuthUser from "./hooks/useAuthUser.js";
 import PageLoader from "./components/PageLoader.jsx";
+import Layout from "./components/Layout.jsx";
 
 const App = () => {
 const { isLoading, authUser} = useAuthUser();
@@ -19,13 +20,15 @@ const isOnboarded = authUser?.isOnboarding;
 return <PageLoader/>
   }
   return (
-    <div className="h-screen " data-theme="autumn">
+    <div className="h-screen " data-theme="forest">
       <Routes>
         <Route
           path="/"
           element={  isAuthenticated ? (
       isOnboarded ? (
+        <Layout showSidebar={true}>
         <HomePage />
+        </Layout>
       ) : (
         <Navigate to="/onboarding" replace />
       )
