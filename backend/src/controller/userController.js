@@ -8,7 +8,7 @@ export async function recommendedUsers(req, res) {
     const recommendedUsers = await User.find({
       $and: [
         { _id: { $ne: currentUserId } },
-        { $id: { $nin: currentUser.friends } },
+        { _id: { $nin: currentUser.friends } },
         { isOnboarding: true },
       ],
     });
@@ -33,7 +33,7 @@ export async function getFriendsList(req, res){
     }
 }
 
-export async function sendFriendRequest(res, req){
+export async function sendFriendRequest(req, res){
     try{
         const thisId = req.user.id;
         const {id:recipientId} = req.params;
