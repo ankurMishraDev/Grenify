@@ -44,5 +44,6 @@ export default {
       "dim",
       "nord",
       "sunset",
+      "customTheme1",
     ],}
 }

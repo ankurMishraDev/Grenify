@@ -160,6 +160,11 @@ export const THEMES = [
     label: "Sunset",
     colors: ["#1e293b", "#f5734c", "#ec4899", "#ffffff"],
   },
+  {
+    name: "customTheme1",
+    label: "Beige",
+    colors: ["#F2F2F2", "#EAE4D5", "#B6B09F", "#000000"],
+  }
 ];
 
 export const LANGUAGES = [

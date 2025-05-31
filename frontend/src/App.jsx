@@ -51,7 +51,13 @@ return <PageLoader/>
         />
         <Route
           path="/notification"
-          element={isAuthenticated ? <NotificationPage /> : <Navigate to="/login" />}
+          element={isAuthenticated ?(
+            <Layout showSidebar={true}>
+              <NotificationPage/>
+            </Layout>
+          ):(
+            <Navigate to={isAuthenticated? "/login" : "/onboarding"} />
+          )}
         />
         <Route
           path="/onboarding"

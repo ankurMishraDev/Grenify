@@ -3,6 +3,7 @@ import {
   getUserFriendList,
   getUserRecommendList,
   getOutgoingFriendRequest,
+  getFriendRequest, // If you use this for incoming requests
 } from "../lib/api";
 import React, { useEffect, useState } from "react";
 import { sendFriendRequest } from "../lib/api";
@@ -10,20 +11,21 @@ import { Link } from "react-router";
 import FriendCard from "../components/FriendCard";
 import NoFriendsFound from "../components/NoFriendsFound";
 import { CheckCircleIcon, MapPinIcon, UserPlusIcon } from "lucide-react";
-import { getLanguageFlag } from "../components/FriendCard";
+import { getLanguageFlag } from "../utils/minorFeature.jsx";
 
 const HomePage = () => {
   const queryClient = useQueryClient();
   const [sendingRequestId, setSendingRequestId] = useState(new Set());
-  
+
   const capitalizeFirstLetter = (str) =>
-    str.charAt(0).toUpperCase() + str.slice(1);
-    
+    str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
+
+  // Queries
   const { data: userFriendList = [], isLoading: loadFriendList } = useQuery({
     queryKey: ["userFriendList"],
     queryFn: getUserFriendList,
   });
-  
+
   const { data: userRecommendations = [], isLoading: loadRecommendations } =
     useQuery({
       queryKey: ["userRecommendList"],
@@ -34,26 +36,40 @@ const HomePage = () => {
     queryKey: ["outgoingFriendRequest"],
     queryFn: getOutgoingFriendRequest,
   });
-  
-  const { mutate: sentReqsMutation, isPending } = useMutation({
-    mutationFn: sendFriendRequest,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["outgoingFriendRequest"] }),
+
+  // If you want to check for incoming requests (for "Check Friend Requests" button)
+  const { data: allFriendRequests = {} } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: getFriendRequest,
   });
 
-  // Fix: Update sendingRequestId when outgoingFriendRequest changes
+  // Mutation for sending friend requests
+  const { mutate: sentReqsMutation, isPending } = useMutation({
+    mutationFn: sendFriendRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["outgoingFriendRequest"] });
+    },
+  });
+
+  // Defensive: Build set of outgoing request recipient IDs
   useEffect(() => {
-    if (outgoingFriendRequest && outgoingFriendRequest.length > 0) {
-      // console.log("Outgoing Friend Requests:", outgoingFriendRequest);
-      const outgoingIds = new Set(
-        outgoingFriendRequest.map(request => request.recipient._id)
+    if (Array.isArray(outgoingFriendRequest) && outgoingFriendRequest.length > 0) {
+      const validRequests = outgoingFriendRequest.filter(
+        request => request && request.recipient && request.recipient._id
       );
-      // console.log(outgoingIds)
+      const outgoingIds = new Set(validRequests.map(request => request.recipient._id));
       setSendingRequestId(outgoingIds);
     } else {
       setSendingRequestId(new Set());
     }
-  }, [outgoingFriendRequest]); // Proper dependency
+  }, [outgoingFriendRequest]);
+
+  // Defensive: Build set of friend IDs
+  const friendIds = new Set(
+    Array.isArray(userFriendList)
+      ? userFriendList.filter(friend => friend && friend._id).map(friend => friend._id)
+      : []
+  );
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -66,7 +82,7 @@ const HomePage = () => {
             Friend Requests
           </Link>
         </div>
-        
+
         {loadFriendList ? (
           <div className="flex justify-center py-12">
             <span className="loading loading-spinner loading-lg" />
@@ -75,9 +91,11 @@ const HomePage = () => {
           <NoFriendsFound />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {userFriendList.map((friend) => (
-              <FriendCard key={friend.id} friend={friend} />
-            ))}
+            {userFriendList
+              .filter(friend => friend && friend._id)
+              .map((friend) => (
+                <FriendCard key={friend._id} friend={friend} />
+              ))}
           </div>
         )}
 
@@ -111,78 +129,103 @@ const HomePage = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {userRecommendations.map((user) => {
-                const hasRequestSent = sendingRequestId.has(user._id);
-                return (
-                  <div
-                    className="card bg-base-200 hover:shadow-lg transition-all duration-300"
-                    key={user.id}
-                  >
-                    <div className="card-body p-5 space-y-4">
-                      <div className="flex items-center gap-4">
-                        <div className="avatar size-24 rounded-full">
-                          <img 
-                            src={user.profilePic} 
-                            alt={user.fullName} 
-                            className="w-24 h-24 object-cover rounded-full" 
-                          />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-2xl">
-                            {user.fullName}
-                          </h3>
-                          {user.location && (
-                            <div className="flex items-center text-sm opacity-70 mt-2">
-                              <MapPinIcon className="size-4 mr-1" />
-                              {user.location}
-                            </div>
-                          )}
-                        </div>
-                      </div>
+              {userRecommendations
+                .filter(user => user && user._id)
+                .map((user) => {
+                  const hasRequestSent = sendingRequestId.has(user._id);
+                  const isAlreadyFriend = friendIds.has(user._id);
+                  // Check if there's an incoming request from this user
+                  const hasIncomingRequest = Array.isArray(allFriendRequests.incomingReqs)
+                    ? allFriendRequests.incomingReqs.some(
+                        req => req.sender && req.sender._id === user._id
+                      )
+                    : false;
 
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <span className="badge badge-secondary font-bold text-base">
-                          {getLanguageFlag(user.nativeLanguage)}
-                          Native: {capitalizeFirstLetter(user.nativeLanguage)}
-                        </span>
-                        <span className="badge font-bold text-base">
-                          {getLanguageFlag(user.learningLanguage)}
-                          Learning:{" "}
-                          {capitalizeFirstLetter(user.learningLanguage)}
-                        </span>
-                      </div>
-                      
-                      {user.bio && (
-                        <p className="text-base opacity-70">{user.bio}</p>
-                      )}
-                      
-                      <button
-                        className={`btn w-full mt-2 ${
-                          hasRequestSent ? "btn-disabled" : "btn-primary"
-                        }`}
-                        onClick={() => {
-                          sentReqsMutation(user._id);
-                          // Optimistically update the UI
-                          setSendingRequestId(prev => new Set([...prev, user._id]));
-                        }}
-                        disabled={isPending || hasRequestSent}
-                      >
-                        {hasRequestSent ? (
-                          <>
-                            <CheckCircleIcon className="size-5 mr-2" />
-                            Request Sent
-                          </>
-                        ) : (
-                          <>
-                            <UserPlusIcon className="size-5 mr-2" />
-                            Add Friend
-                          </>
+                  return (
+                    <div
+                      key={user._id}
+                      className="card bg-base-200 hover:shadow-lg transition-all duration-300"
+                    >
+                      <div className="card-body p-5 space-y-4">
+                        <div className="flex items-center gap-4">
+                          <div className="avatar size-24 rounded-full">
+                            <img
+                              src={user.profilePic}
+                              alt={user.fullName}
+                              className="w-24 h-24 object-cover rounded-full"
+                            />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-2xl">
+                              {user.fullName}
+                            </h3>
+                            {user.location && (
+                              <div className="flex items-center text-sm opacity-70 mt-2">
+                                <MapPinIcon className="size-4 mr-1" />
+                                {user.location}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <span className="badge badge-secondary gap-0.5 font-bold text-base">
+                            Native: {getLanguageFlag(user.nativeLanguage)}
+                            {capitalizeFirstLetter(user.nativeLanguage)}
+                          </span>
+                          <span className="badge font-bold gap-.5 text-base">
+                            Learning: {getLanguageFlag(user.learningLanguage)}
+                            {capitalizeFirstLetter(user.learningLanguage)}
+                          </span>
+                        </div>
+
+                        {user.bio && (
+                          <p className="text-base opacity-70">{user.bio}</p>
                         )}
-                      </button>
+
+                        {hasIncomingRequest ? (
+                          <div className="btn btn-info w-full mt-2">
+                            <span>Check Friend Requests</span>
+                          </div>
+                        ) : (
+                          <button
+                            className={`btn w-full mt-2 ${
+                              hasRequestSent || isAlreadyFriend
+                                ? "btn-disabled"
+                                : "btn-primary"
+                            }`}
+                            onClick={() => {
+                              if (!hasRequestSent && !isAlreadyFriend) {
+                                sentReqsMutation(user._id);
+                                setSendingRequestId(
+                                  prev => new Set([...prev, user._id])
+                                );
+                              }
+                            }}
+                            disabled={isPending || hasRequestSent || isAlreadyFriend}
+                          >
+                            {isAlreadyFriend ? (
+                              <>
+                                <CheckCircleIcon className="size-5 mr-2" />
+                                Already Friends
+                              </>
+                            ) : hasRequestSent ? (
+                              <>
+                                <CheckCircleIcon className="size-5 mr-2" />
+                                Request Sent
+                              </>
+                            ) : (
+                              <>
+                                <UserPlusIcon className="size-5 mr-2" />
+                                Add Friend
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           )}
         </section>
