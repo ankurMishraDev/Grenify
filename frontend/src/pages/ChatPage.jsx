@@ -57,7 +57,7 @@ const ChatPage = () => {
       }
     };
     initializeChat();
-  }, [tokenData, authUser, targetUserId]); 
+  }, [tokenData, authUser, targetUserId, CLIENT_API_KEY]); 
   const handleVideoCall = () => {
     if(chatChannel){
       const videoCallLink = `${window.location.origin}/call/${chatChannel.id}`;
