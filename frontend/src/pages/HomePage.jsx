@@ -197,9 +197,7 @@ const HomePage = () => {
                             onClick={() => {
                               if (!hasRequestSent && !isAlreadyFriend) {
                                 sentReqsMutation(user._id);
-                                setSendingRequestId(
-                                  prev => new Set([...prev, user._id])
-                                );
+                               
                               }
                             }}
                             disabled={isPending || hasRequestSent || isAlreadyFriend}
