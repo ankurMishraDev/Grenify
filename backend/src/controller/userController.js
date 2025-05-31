@@ -83,6 +83,8 @@ export async function acceptFriendRequest(req, res){
         friendReqs.status = "accepted";
         await friendReqs.save();
         await User.findByIdAndUpdate(friendReqs.sender, {$addToSet: {friends: friendReqs.recipient}});
+           await User.findByIdAndUpdate(friendReqs.recipient, {$addToSet: {friends: friendReqs.sender}});
+        res.status(200).json({message: "Friend request accepted"});
     } catch(error){
         console.log("Error in acceptFriendRequest controller", error.message);
         res.status(500).json({
