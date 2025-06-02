@@ -48,7 +48,14 @@ const NotificationPage = () => {
                           <div className="flex items-center gap-3">
                             <div className="avatar w-14 h-14 rounded-full bg-base-300">
                               <img
-                                src={reqs.sender.profilePic}
+                                src={reqs.sender && reqs.sender.profilePic ? (
+  <img
+    src={reqs.sender.profilePic}
+    alt={reqs.sender.fullName || "Profile Picture"}
+  />
+) : (
+  <div className="placeholder bg-base-300 w-14 h-14 rounded-full" />
+)}
                                 alt={reqs.sender.fullName}
                               />
                             </div>
@@ -95,7 +102,14 @@ const NotificationPage = () => {
                     <div className="card-body p-4">
                       <div className="flex items-start gap-3">
                         <div className="avatar mt-1 size-10 rounded-full">
-                          <img src={reqs.recipient.profilePic} alt={reqs.recipient.fullName} />
+                          <img src={reqs.recipient && reqs.recipient.profilePic ? (
+  <img
+    src={reqs.recipient.profilePic}
+    alt={reqs.recipient.fullName || "Profile Picture"}
+  />
+) : (
+  <div className="placeholder bg-base-300 size-10 rounded-full" />
+)} alt={reqs.recipient.fullName} />
                         </div>
                         <div className="flex-1">
                           <h3 className="font-semibold">{reqs.recipient.fullName}</h3>
