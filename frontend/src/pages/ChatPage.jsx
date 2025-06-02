@@ -16,6 +16,7 @@ import {
 import { StreamChat } from "stream-chat";
 import toast from "react-hot-toast";
 import CallButton from "../components/CallButton.jsx";
+
 const ChatPage = () => {
   const CLIENT_API_KEY = import.meta.env.VITE_STREAM_API_KEY;
   const { id: targetUserId } = useParams();
@@ -23,11 +24,13 @@ const ChatPage = () => {
   const [chatChannel, setChatChannel] = useState(null);
   const [loading, setLoading] = useState(true);
   const { authUser } = useAuthUser();
+  
   const { data: tokenData } = useQuery({
     queryKey: ["streamUser"],
     queryFn: getStreamToken,
     enabled: !!authUser,
   });
+
   useEffect(() => {
     const initializeChat = async () => {
       if (!tokenData?.token || !authUser) return;
@@ -58,6 +61,7 @@ const ChatPage = () => {
     };
     initializeChat();
   }, [tokenData, authUser, targetUserId, CLIENT_API_KEY]); 
+
   const handleVideoCall = () => {
     if(chatChannel){
       const videoCallLink = `${window.location.origin}/call/${chatChannel.id}`;
@@ -74,23 +78,35 @@ const ChatPage = () => {
       toast.success("Video call link sent!");
     }
   }
-    if(!chatClient || !chatChannel || loading) {
-        return <ChatLoader />;
-      }
+
+  if(!chatClient || !chatChannel || loading) {
+    return <ChatLoader />;
+  }
+
   return (
-    <div className="h-[93vh]">
+    <div className="w-full h-[calc(100vh-64px)] sm:h-[calc(100vh-72px)] md:h-[93vh] overflow-hidden">
       <Chat client={chatClient}>
         <Channel channel={chatChannel}>
-          <div className="w-full relative">
-            <CallButton handleVideoCall={handleVideoCall}/>
+          <div className="w-full h-full flex flex-col relative">
+            <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10">
+              <CallButton handleVideoCall={handleVideoCall}/>
+            </div>
             <Window>
-              <ChannelHeader />
-              <MessageList />
-              <MessageInput focus/>
+              <div className="w-full h-full flex flex-col">
+                <div className="flex-shrink-0">
+                  <ChannelHeader />
+                </div>
+                <div className="flex-1 min-h-0 overflow-hidden">
+                  <MessageList />
+                </div>
+                <div className="flex-shrink-0">
+                  <MessageInput focus/>
+                </div>
+              </div>
             </Window>
           </div>
           <Thread />
-          </Channel>
+        </Channel>
       </Chat>
     </div>
   )

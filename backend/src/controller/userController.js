@@ -150,6 +150,9 @@ export async function acceptFriendRequest(req, res){
 
 export async function getFriendRequest(req, res){
     try{
+        // Clean up orphaned requests before fetching
+        await cleanupOrphanedRequestsInternal();
+        
         const incomingReqs = await FriendRequest.find({
             recipient: req.user.id, 
             status: "pending"
@@ -160,9 +163,13 @@ export async function getFriendRequest(req, res){
             status: "accepted"
         }).populate("recipient", "fullName profilePic nativeLanguage learningLanguage");
         
+        // Filter out requests with null populated fields
+        const validIncomingReqs = incomingReqs.filter(req => req.sender !== null);
+        const validAcceptingReqs = acceptingReqs.filter(req => req.recipient !== null);
+        
         res.status(200).json({
-            incomingReqs, 
-            acceptingReqs // Changed from acceptingReqs to outgoingReqs for clarity
+            incomingReqs: validIncomingReqs, 
+            acceptingReqs: validAcceptingReqs
         });
     } catch(error){
         console.log("Error in getFriendRequest controller", error.message);
@@ -174,6 +181,9 @@ export async function getFriendRequest(req, res){
 
 export async function getOutgoingFriendRequest(req, res){
     try{
+        // Clean up orphaned requests before fetching
+        await cleanupOrphanedRequestsInternal();
+        
         const outgoingReqs = await FriendRequest.find({
             sender: req.user.id,
             status: "pending"
@@ -192,19 +202,47 @@ export async function getOutgoingFriendRequest(req, res){
     }
 }
 
-// Additional helper function to clean up orphaned friend requests
+// Internal helper function for automatic cleanup
+async function cleanupOrphanedRequestsInternal() {
+    try {
+        // Find all friend requests
+        const allRequests = await FriendRequest.find({});
+        const orphanedRequestIds = [];
+        
+        for (const request of allRequests) {
+            // Check if sender exists
+            const senderExists = await User.findById(request.sender);
+            // Check if recipient exists
+            const recipientExists = await User.findById(request.recipient);
+            
+            if (!senderExists || !recipientExists) {
+                orphanedRequestIds.push(request._id);
+            }
+        }
+        
+        if (orphanedRequestIds.length > 0) {
+            await FriendRequest.deleteMany({
+                _id: { $in: orphanedRequestIds }
+            });
+            console.log(`Auto-cleaned ${orphanedRequestIds.length} orphaned friend requests`);
+        }
+    } catch (error) {
+        console.log("Error in auto-cleanup:", error.message);
+    }
+}
+
+// Public cleanup function for manual use
 export async function cleanupOrphanedRequests(req, res) {
     try {
-        // Remove friend requests where sender or recipient no longer exists
-        const result = await FriendRequest.deleteMany({
-            $or: [
-                { sender: { $exists: false } },
-                { recipient: { $exists: false } }
-            ]
-        });
+        await cleanupOrphanedRequestsInternal();
         
-        console.log(`Cleaned up ${result.deletedCount} orphaned friend requests`);
-        res.status(200).json({ message: `Cleaned up ${result.deletedCount} orphaned requests` });
+        // Get count of remaining requests for confirmation
+        const remainingCount = await FriendRequest.countDocuments();
+        
+        res.status(200).json({ 
+            message: "Cleanup completed successfully",
+            remainingRequests: remainingCount
+        });
     } catch (error) {
         console.log("Error in cleanupOrphanedRequests", error.message);
         res.status(500).json({ message: "Internal server error" });
