@@ -78,7 +78,7 @@ const HomePage = () => {
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
             Your Friends
           </h2>
-          <Link to="/notifications" className="btn btn-outline btn-sm">
+          <Link to="/notification" className="btn btn-outline btn-sm">
             Friend Requests
           </Link>
         </div>
